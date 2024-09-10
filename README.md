@@ -1,4 +1,5 @@
 #Avaliação Gramatical Automática de Redações em Português
+
 Este repositório é parte de um projeto de avaliação automática de redações em português, 
 
 no qual focamos na análise gramatical dos textos. Nosso objetivo é desenvolver uma ferramenta
