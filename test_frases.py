@@ -1,6 +1,6 @@
 import unittest
 
-
+from leitura03 import extrair_sentencas
 class TestCaseFrases(unittest.TestCase):
     def test_frases_corretas_erradas(self):
         body = """
