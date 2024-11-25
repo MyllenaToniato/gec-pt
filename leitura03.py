@@ -3,6 +3,7 @@ from nltk.tokenize import sent_tokenize
 import os
 import xml.etree.ElementTree as ET
 
+nltk.download('punkt_tab')
 
 def verificar_caminho(caminho_base):
     # Verifica se o caminho fornecido existe
