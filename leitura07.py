@@ -30,17 +30,17 @@ def ler_arquivo_xml(caminho_arquivo):
 
 def extrair_sentencas_novo(body_text):
     """ Essa função primeiro está reconhecento as tags <wrong> para depois fazer a tokenização"""
-    trechos_com_wrong = re.findall(
-        r'([^.]*?<wrong>.*?</wrong>[^.]*\.)', body_text, re.DOTALL)
+    trechos_com_tags = re.findall(
+        r'([^.]*?<(wrong|correct)>.*?</\2>[^.]*\.)', body_text, re.DOTALL)
 
-    if not trechos_com_wrong:
+    if not trechos_com_tags:
         return []
 
-    frases_com_erros = []
-    for trecho in trechos_com_wrong:
-        frases_com_erros.extend(sent_tokenize(trecho))
+    frases_com_tags = []
+    for trecho,_ in trechos_com_tags:
+        frases_com_tags.extend(sent_tokenize(trecho))
 
-    return frases_com_erros
+    return frases_com_tags
 
 
 def remover_colchetes_extremos(texto):
@@ -91,19 +91,19 @@ def varrer_arquivos_sem_colchetes(diretorio_base, arquivo_saida):
                     # Adiciona uma lista vazia caso não haja frases com erro.
                     dados.append([[], arquivo, raiz])
 
-    with open(arquivo_saida, 'w', newline='', encoding='utf-8-sig') as csvfile:
-        writer = csv.writer(csvfile)
+    with open(arquivo_saida, 'w', newline='', encoding='utf-8-sig') as tsvfile:
+        writer = csv.writer(tsvfile, delimiter="\t")
         writer.writerow(["Texto", "Arquivo", "Diretório"])
         writer.writerows(dados)
 
-    print(f"Arquivo CSV '{arquivo_saida}' criado com sucesso!")
+    print(f"Arquivo TSV '{arquivo_saida}' criado com sucesso!")
 
 ####### UTILIZANDO A FUNÇÃO ###############
 
 
 DIRETORIO_RAIZ = r"C:\Users\jpgtb\OneDrive\Documentos\PythonScripts\IFES_correcao\aes-pt\data"
-CSV_SAIDA = "resultado_extrair_sentenca_novo.csv"
-CSV_SAIDA_SEM_COLCHETE = "resultado_extrair_sentenca_novo_sem_colchetes.csv"
+CSV_SAIDA = "resultado_extrair_sentenca_wrongcorrect.tsv"
+CSV_SAIDA_SEM_COLCHETE = "resultado_extrair_sentenca_wrongcorrect_sem_colchetes.tsv"
 # varrer_arquivos(DIRETORIO_RAIZ, CSV_SAIDA)
 varrer_arquivos_sem_colchetes(DIRETORIO_RAIZ, CSV_SAIDA_SEM_COLCHETE)
 
