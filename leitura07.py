@@ -84,12 +84,9 @@ def varrer_arquivos_sem_colchetes(diretorio_base, arquivo_saida):
                 body_text = ler_arquivo_xml(caminho_arquivo)
                 frases_com_erros = extrair_sentencas_novo(body_text)
 
-                if frases_com_erros:  # Verifica se a lista não está vazia
+                for frase in frases_com_erros:
                     dados.append([remover_colchetes_extremos(
-                        frases_com_erros[0]), arquivo, raiz])
-                else:
-                    # Adiciona uma lista vazia caso não haja frases com erro.
-                    dados.append([[], arquivo, raiz])
+                        frase), arquivo, raiz])
 
     with open(arquivo_saida, 'w', newline='', encoding='utf-8-sig') as tsvfile:
         writer = csv.writer(tsvfile, delimiter="\t")
@@ -103,7 +100,7 @@ def varrer_arquivos_sem_colchetes(diretorio_base, arquivo_saida):
 
 DIRETORIO_RAIZ = r"C:\Users\jpgtb\OneDrive\Documentos\PythonScripts\IFES_correcao\aes-pt\data"
 CSV_SAIDA = "resultado_extrair_sentenca_wrongcorrect.tsv"
-CSV_SAIDA_SEM_COLCHETE = "resultado_extrair_sentenca_wrongcorrect_sem_colchetes.tsv"
+CSV_SAIDA_SEM_COLCHETE = "resultado_novo_extrair_sentenca_wrongcorrect_sem_colchetes.tsv"
 # varrer_arquivos(DIRETORIO_RAIZ, CSV_SAIDA)
 varrer_arquivos_sem_colchetes(DIRETORIO_RAIZ, CSV_SAIDA_SEM_COLCHETE)
 
