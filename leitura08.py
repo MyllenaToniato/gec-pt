@@ -4,7 +4,6 @@ from lxml import etree
 from nltk.tokenize import sent_tokenize
 import re
 
-
 def ler_arquivo_xml(caminho_arquivo):
     """Abre o arquivo xml com base no caminho passado"""
     with open(caminho_arquivo, 'r', encoding='utf-8') as arquivo:
@@ -106,7 +105,7 @@ def varrer_arquivos_erros_dentro_wrong_com_frase(diretorio_base, arquivo_saida):
                         dados.append([erro_limpo, correcao_limpa, frase.strip(), arquivo, raiz])
 
     # Salvando no TSV
-       with open(arquivo_saida, 'w', newline='', encoding='utf-8-sig') as f:
+    with open(arquivo_saida, 'w', newline='', encoding='utf-8-sig') as f:
         writer = csv.writer(f, delimiter="\t")
         writer.writerow(["palavra_errada", "palavra_correta", "frase_original", "arquivo", "diretorio"])
         writer.writerows(dados)
@@ -114,7 +113,6 @@ def varrer_arquivos_erros_dentro_wrong_com_frase(diretorio_base, arquivo_saida):
     print(f"Arquivo '{arquivo_saida}' com erros e frases originais criado com sucesso!")
 
 ####### UTILIZANDO A FUNÇÃO ###############
-
 
 DIRETORIO_RAIZ = r"C:\Users\jpgtb\OneDrive\Documentos\PythonScripts\IFES_correcao\aes-pt\data"
 CSV_SAIDA_BD = "resultado_extrair_sentenca_wrongcorrect.tsv"
