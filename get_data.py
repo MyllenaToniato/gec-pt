@@ -75,8 +75,8 @@ def main():
 
     # Output da frase
     print("*** SENTENÇA TRANSFORMADA PARA O FORMATO BIO *** ")
-    print(f"Sentença original: {frase1}")
-    print(f"Formato BIO: {formato_bio}")
+    print(f"\nSentença original: {frase1}")
+    print(f"\nFormato BIO: {formato_bio}")
 
 
 if __name__ == "__main__":
