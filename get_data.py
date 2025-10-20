@@ -18,11 +18,6 @@ def tag2bio(sentenca):
         sent_temp = sent_temp[:indice_inicial] + sent_temp[
             indice_final:]  # armazenar a sentença sem as tags e o conteúdo de dentro delas
 
-        if indice_inicial != -1 and indice_inicial_tagfinal != -1:  # remover do segmento se ambos os índices forem encontrados
-            indice_final = indice_inicial_tagfinal + len(
-                tagfinal_correct)  # calcular o índice final do trecho (com o </correct>)
-            sent_temp = sent_temp[:indice_inicial] + sent_temp[indice_final:]  # excluir o segmento
-
     # ** Separação e armazenamento dos tokens **
 
     # Parte 1: Separação das tags
@@ -67,7 +62,7 @@ def tag2bio(sentenca):
 
 def main():
     # Leitura do arquivo CSV (TSV), com suporte de acentuação
-    leitura = pd.read_csv('erros_wrong_correct_com_frase_original.tsv', encoding='latin-1', sep='\t')
+    leitura = pd.read_csv('erros_wrong_correct_com_frase_original.tsv', encoding='utf-8', sep='\t')
 
     # Tranformação da primeira frase através da função tag2bio
     frase1 = leitura['frase_original'].iloc[0]
