@@ -1,28 +1,16 @@
 import pandas as pd
+import re
 
 def tag2bio(sentenca):
-    # ** Eliminação dos blocos iniciais e finais dos corrects **
+    if not isinstance(sentenca, str):
+        return []
 
-    # Parte 1: Encontrar as tags
-    taginicial_correct = "<correct>"
-    tagfinal_correct = "</correct>"
-
-    # Parte 2: Retirá-las
-    sent_temp = sentenca  # variável "sentença temporária"
-    while taginicial_correct in sent_temp and tagfinal_correct in sent_temp:
-
-        indice_inicial = sent_temp.index(taginicial_correct)  # achar a posição inicial da tag inicial do correct
-        indice_inicial_tagfinal = sent_temp.index(tagfinal_correct,
-                                                  indice_inicial)  # achar o índice inicial da tag final do correct
-        indice_final = indice_inicial_tagfinal + len(tagfinal_correct)  # calcular a posição final do "</correct>"
-        sent_temp = sent_temp[:indice_inicial] + sent_temp[
-            indice_final:]  # armazenar a sentença sem as tags e o conteúdo de dentro delas
-
+    sent_temp = sentenca
     # ** Separação e armazenamento dos tokens **
 
-    # Parte 1: Separação das tags
+    # Parte 1: Separação de todas as tags
     sent_temp2 = sent_temp
-    for tag in ["<wrong>", "</wrong>"]:
+    for tag in ["<wrong>", "</wrong>", "<correct>", "</correct>"]:
         sent_temp2 = sent_temp2.replace(tag, " " + tag + " ")
 
     # Parte 2: Separação da pontuação
@@ -31,8 +19,10 @@ def tag2bio(sentenca):
         sent_temp2 = sent_temp2.replace(pontuacao, " " + pontuacao + " ")
 
     # Parte 3: Guardar tokens separados
+    sent_temp2 = re.sub(r'\s+', ' ', sent_temp2)
+
     tokens = []
-    for token in sent_temp2.split(' '):
+    for token in sent_temp2.strip().split(' '):
         if token != "":
             tokens.append(token)
 
@@ -42,20 +32,20 @@ def tag2bio(sentenca):
     primeiro_erro = True
 
     for token in tokens:
-        if token == "<wrong>":  # se token estiver nessa tag, indica o início do erro
+        if token == "<wrong>":
             trecho_errado = True
             primeiro_erro = True
-        elif token == "</wrong>":  # se token estiver nessa tag, indica o término do trecho do erro
+        elif token == "</wrong>":
             trecho_errado = False
         else:
-            if trecho_errado:  # se token estiver dentro do trecho errado
+            if trecho_errado:
                 if primeiro_erro:
-                    bio.append((token, "B-WRONG"))  # adicinar B-WRONG para primeiro erro
+                    bio.append((token, "B-WRONG"))
                     primeiro_erro = False
                 else:
-                    bio.append((token, "I-WRONG"))  # adicinar I-WRONG para resto do trecho
+                    bio.append((token, "I-WRONG"))
             else:
-                bio.append((token, "O"))  # se fora do trecho errado, adicinar O
+                bio.append((token, "O"))
 
     return bio
 
@@ -64,15 +54,23 @@ def main():
     # Leitura do arquivo CSV (TSV), com suporte de acentuação
     leitura = pd.read_csv('erros_wrong_correct_com_frase_original.tsv', encoding='utf-8', sep='\t')
 
-    # Tranformação da primeira frase através da função tag2bio
-    frase1 = leitura['frase_original'].iloc[0]
-    formato_bio = tag2bio(frase1)
+    # Aplica a transformação BIO em todas as linhas
+    leitura['formato_bio'] = leitura['frase_original'].apply(tag2bio)
 
-    # Output da frase
-    print("*** SENTENÇA TRANSFORMADA PARA O FORMATO BIO *** ")
-    print(f"\nSentença original: {frase1}")
-    print(f"\nFormato BIO: {formato_bio}")
+    # Coluna temporária
+    leitura['formato_bio_str'] = leitura['formato_bio'].astype(str)
 
+    # Criação de um Dataframe com sentenças não repetidas
+    df_unico = leitura[['frase_original', 'formato_bio', 'formato_bio_str']].drop_duplicates(
+        subset=['frase_original', 'formato_bio_str']
+    ).drop(columns=['formato_bio_str']).reset_index(drop=True)
+
+    print("*** SENTENÇAS EM FORMATO BIO *** ")
+
+    for i in range(len(df_unico)):
+        print(f"\n--- Sentença Nº{i + 1} ---")
+        print(f"Sentença original: {df_unico['frase_original'].iloc[i]}")
+        print(f"Formato BIO: {df_unico['formato_bio'].iloc[i]}")
 
 if __name__ == "__main__":
     main()
