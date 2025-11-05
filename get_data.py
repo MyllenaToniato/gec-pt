@@ -2,13 +2,8 @@ import pandas as pd
 import re
 from collections import Counter
 from sklearn.model_selection import train_test_split
-import sklearn_crfsuite
-from sklearn_crfsuite import metrics
-from sklearn.metrics import accuracy_score
 
-# Semente fixa (SEED) para garantir a reprodutibilidade da divisão
 SEED = 100
-
 
 def tag2bio(sentenca):
     if not isinstance(sentenca, str):
@@ -46,8 +41,6 @@ def tag2bio(sentenca):
             primeiro_erro = True
         elif token == "</wrong>":
             trecho_errado = False
-        elif token == "<correct>" or token == "</correct>":
-            continue  # Ignora tags correct
         else:
             if trecho_errado:
                 if primeiro_erro:
@@ -60,99 +53,54 @@ def tag2bio(sentenca):
 
     return bio
 
-
-# --- FUNÇÃO AUXILIAR PARA ESTRATIFICAÇÃO ---
-def frase_contem_erro(sentenca_bio):
-    """Verifica se a frase contém qualquer tag de erro (WRONG)."""
+def contem_erro(sentenca_bio):
     for _, tag in sentenca_bio:
         if 'WRONG' in tag:
             return True
     return False
 
-
-# --- FUNÇÃO AUXILIAR PARA FEATURE ENGINEERING (CRF) ---
-def extrai_caracteristicas_rotulos(df):
-    X_out = []
-    y_out = []
-    for sentenca_bio in df['formato_bio']:
-        sent_features = []
-        sent_rotulos = []
-
-        for i, (palavra, rotulo) in enumerate(sentenca_bio):
-            # Feature Engineering: Extrai características contextuais
-            features = {
-                'word.lower()': palavra.lower(),
-                'word.isupper()': palavra.isupper(),
-                'word.istitle()': palavra.istitle(),
-                'word.isdigit()': palavra.isdigit(),
-                'bias': 1.0,
-            }
-            # Palavra anterior (-1)
-            if i > 0:
-                features.update({
-                    '-1:palavra.lower()': sentenca_bio[i - 1][0].lower(),
-                    '-1:palavra.istitle()': sentenca_bio[i - 1][0].istitle(),
-                })
-            else:
-                features['BOS'] = True  # Indica o início da sentença
-
-            # Próxima palavra (+1)
-            if i < len(sentenca_bio) - 1:
-                features.update({
-                    '+1:palavra.lower()': sentenca_bio[i + 1][0].lower(),
-                    '+1:palavra.istitle()': sentenca_bio[i + 1][0].istitle(),
-                })
-            else:
-                features['EOS'] = True  # Indica o fim da sentença
-
-            sent_features.append(features)
-            sent_rotulos.append(rotulo)
-
-        X_out.append(sent_features)
-        y_out.append(sent_rotulos)
-
-    return X_out, y_out
-
-
 def main():
-    # Caminho do arquivo (Mantido o caminho absoluto para evitar FileNotFoundError)
-    caminho_file = 'C:/Users/Mylenna/PycharmProjects/gec-pt/erros_wrong_correct_com_frase_original.tsv'
+    # Leitura do arquivo CSV (TSV), com suporte de acentuação
+    leitura = pd.read_csv('erros_wrong_correct_com_frase_original.tsv', encoding='utf-8', sep='\t')
 
-    try:
-        leitura = pd.read_csv(caminho_file, encoding='utf-8', sep='\t')
-    except FileNotFoundError:
-        print(f"\n*** ERRO: Arquivo '{caminho_file}' não encontrado. Verifique o caminho. ***")
-        return
-
-    # Aplica a transformação BIO e cria o DataFrame único
+    # Aplica a transformação BIO em todas as linhas
     leitura['formato_bio'] = leitura['frase_original'].apply(tag2bio)
+
+    # Coluna temporária
     leitura['formato_bio_str'] = leitura['formato_bio'].astype(str)
+
+    # Criação de um Dataframe com sentenças não repetidas
     df_unico = leitura[['frase_original', 'formato_bio', 'formato_bio_str']].drop_duplicates(
         subset=['frase_original', 'formato_bio_str']
     ).drop(columns=['formato_bio_str']).reset_index(drop=True)
 
-    # ... (Cálculo da estatística dos tokens e prints) ...
     print("*** SENTENÇAS EM FORMATO BIO *** ")
-    for i in range(min(1, len(df_unico))):                                                          #for i in range(len(df_unico)):
+
+    for i in range(len(df_unico)):
         print(f"\n--- Sentença Nº{i + 1} ---")
         print(f"Sentença original: {df_unico['frase_original'].iloc[i]}")
         print(f"Formato BIO: {df_unico['formato_bio'].iloc[i]}")
 
+    # ********** Cálculo da quantidade total de tags e dos tokens B, I e O. **********
+
+    # 1. Extração das tags de cada token, usando cada conjunto de tokens e tags de cada sentença
     qtd_tags = []
     for token_tag in df_unico['formato_bio']:
         for token, tag in token_tag:
             qtd_tags.append(tag)
 
+    # 2. Contar as ocorrências de cada tag
     contagem_tags = Counter(qtd_tags)
     total_tokens = len(qtd_tags)
 
+    # 3. Criar e exportar o DataFrame de cálculo
     df_calculo = pd.DataFrame({
         'Tipo': ['Total de Tokens', 'Tokens B-WRONG', 'Tokens I-WRONG', 'Tokens O'],
         'Quantidade': [
             total_tokens,
             contagem_tags.get('B-WRONG', 0),
             contagem_tags.get('I-WRONG', 0),
-            contagem_tags.get('O', 0)]
+            contagem_tags.get('O', 0) ]
     })
 
     estatistica_tokens = 'estatistica_tokens.tsv'
@@ -160,68 +108,28 @@ def main():
 
     print(f"\n*** ESTATÍSTICA DOS DADOS ***")
     print(df_calculo)
-    print(f"\nO cálculo dos tokens foi salvo no arquivo {estatistica_tokens}")
+    print(f"\nO cálculo dos dados foi salvo em {estatistica_tokens}\n")
 
-    # ********** DIVISÃO DOS DADOS COM SCIKIT-LEARN **********
+    # ********** ESTRATIFICAÇÃO DOS DADOS **********
+    # 1. Cria a coluna dos rótulos BIO
+    df_unico['contem_erro'] = df_unico['formato_bio'].apply(contem_erro)
 
-    print(f" \n*** DIVISÃO ESTRATIFICADA DOS DADOS (80% Treino, 20% Teste, SEED={SEED}) ***")
+    # 2. Faz a divisão nos DataFrames (df_unico), que contêm a frase original e o formato BIO
+    df_train, df_test = train_test_split(df_unico,test_size=0.2,random_state=SEED,stratify = df_unico['contem_erro'])
 
-    # Criação da variável para estratificação (garante que a proporção de erros seja mantida)
-    df_unico['contem_erro'] = df_unico['formato_bio'].apply(frase_contem_erro)
+    df_divisao = pd.DataFrame({
+        'Frases': ['Treino', 'Teste'],
+        'Quantidade': [df_test.get, df_train.get]})
 
-    # Divisão estratificada
-    df_train, df_test = train_test_split(
-        df_unico,
-        test_size=0.2,
-        random_state=SEED,
-        stratify=df_unico['contem_erro']
-    )
+    # 1. Tamanho dos conjuntos de dados (número de frases)
+    print(f"Total de frases: {len(df_unico)}")
+    print(f"Frases para treinamento (80%): {len(df_train)}")
+    print(f"Frases para teste (20%): {len(df_test)}")
 
-    # ********** Preparação final dos dados (Feature Engineering) **********
+    estratificacao_dados = 'estratificacao_dados.tsv'
+    df_divisao.to_csv(estratificacao_dados, sep='\t', index=False, encoding='utf-8')
 
-    X_train, y_train = extrai_caracteristicas_rotulos(df_train)
-    X_test, y_test = extrai_caracteristicas_rotulos(df_test)
-
-    print(f"Sentenças para Treinamento: {len(X_train)}")
-    print(f"Sentenças para Teste: {len(X_test)}")
-
-    # ********** Treinamento do Modelo CRF **********
-
-    print("TREINAMENTO E AVALIAÇÃO DO MODELO CRF")
-
-
-    crf = sklearn_crfsuite.CRF(
-        algorithm='lbfgs',
-        c1=0.1,
-        c2=0.1,
-        max_iterations=100,
-        all_possible_transitions=True
-    )
-
-    try:
-        crf.fit(X_train, y_train)
-        print("\n*** Treinamento do CRF concluído com sucesso! ***")
-    except AttributeError:
-        print("\n*** ERRO: Falha no treinamento do CRF. ***")
-        return
-
-    # Predição e Avaliação
-    y_pred = crf.predict(X_test)
-
-    labels = list(crf.classes_)
-    if 'O' in labels:
-        labels.remove('O')
-
-    print("\nRelatório de Classificação Detalhado (Foco nas tags de Erro):")
-    print(metrics.flat_classification_report(
-        y_test, y_pred, labels=labels, digits=4
-    ))
-
-    y_test_flat = [tag for sent in y_test for tag in sent]
-    y_pred_flat = [tag for sent in y_pred for tag in sent]
-    accuracy = accuracy_score(y_test_flat, y_pred_flat)
-    print(f"Acurácia Geral do Token: {accuracy:.4f}\n")
-
+    print(f"\nA divisão dos dados foi salva em {estatistica_tokens}\n")
 
 if __name__ == "__main__":
     main()
