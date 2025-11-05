@@ -118,8 +118,8 @@ def main():
     df_train, df_test = train_test_split(df_unico,test_size=0.2,random_state=SEED,stratify = df_unico['contem_erro'])
 
     df_divisao = pd.DataFrame({
-        'Frases': ['Treino', 'Teste'],
-        'Quantidade': [df_test.get, df_train.get]})
+        'TIPOS': ['TREINO','TESTE'],
+        'FRASES': [df_train.get, df_test.get]})
 
     # 1. Tamanho dos conjuntos de dados (número de frases)
     print(f"Total de frases: {len(df_unico)}")
@@ -129,6 +129,7 @@ def main():
     estratificacao_dados = 'estratificacao_dados.tsv'
     df_divisao.to_csv(estratificacao_dados, sep='\t', index=False, encoding='utf-8')
 
+    print(df_divisao)
     print(f"\nA divisão dos dados foi salva em {estatistica_tokens}\n")
 
 if __name__ == "__main__":

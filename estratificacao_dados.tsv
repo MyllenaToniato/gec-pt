@@ -1,19 +1,5 @@
-Frases	Quantidade
-Treino	"<bound method NDFrame.get of                                          frase_original  ... contem_erro
-3015  <wrong>È</wrong> <correct>É</correct> invioláv...  ...        True
-4436  Democracia é isso: a constante fiscalização da...  ...        True
-4608  Também deve fornecer os meios médicos para<wro...  ...        True
-4991  Com isso muitas pessoas fizeram dívidas absurd...  ...        True
-2835  Propaganda eleitoral, show de hipocrisia, gatu...  ...        True
-...                                                 ...  ...         ...
-1683  Na Índia, por exemplo, até pouco tempo <correc...  ...        True
-477   É notável que o Brasil, infelizmente, possui<w...  ...        True
-668   Não apenas esses<wrong>medicamentos como també...  ...        True
-3033  Palestras com o intuito de revelar que respeit...  ...        True
-5108  Sendo assim o futebol acaba se tornando não só...  ...        True
-
-[1270 rows x 3 columns]>"
-Teste	"<bound method NDFrame.get of                                          frase_original  ... contem_erro
+TIPOS	FRASES
+TREINO	"<bound method NDFrame.get of                                          frase_original  ... contem_erro
 1259  Nunca mais voltou <wrong>atrás,</wrong> <corre...  ...        True
 1330  Temos também que desenvolver o senso crítico e...  ...        True
 2852  O horário eleitoral gratuito não é usual em ou...  ...        True
@@ -27,3 +13,17 @@ Teste	"<bound method NDFrame.get of                                          fra
 4516  Uma pesquisa realizada pelo Instituto Data Fol...  ...        True
 
 [5077 rows x 3 columns]>"
+TESTE	"<bound method NDFrame.get of                                          frase_original  ... contem_erro
+3015  <wrong>È</wrong> <correct>É</correct> invioláv...  ...        True
+4436  Democracia é isso: a constante fiscalização da...  ...        True
+4608  Também deve fornecer os meios médicos para<wro...  ...        True
+4991  Com isso muitas pessoas fizeram dívidas absurd...  ...        True
+2835  Propaganda eleitoral, show de hipocrisia, gatu...  ...        True
+...                                                 ...  ...         ...
+1683  Na Índia, por exemplo, até pouco tempo <correc...  ...        True
+477   É notável que o Brasil, infelizmente, possui<w...  ...        True
+668   Não apenas esses<wrong>medicamentos como també...  ...        True
+3033  Palestras com o intuito de revelar que respeit...  ...        True
+5108  Sendo assim o futebol acaba se tornando não só...  ...        True
+
+[1270 rows x 3 columns]>"
