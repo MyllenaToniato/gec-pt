@@ -108,7 +108,7 @@ def main():
 
     print(f"\n*** ESTATÍSTICA DOS DADOS ***")
     print(df_calculo)
-    print(f"\nO cálculo dos dados foi salvo em {estatistica_tokens}\n")
+    print(f"\n *** O cálculo dos dados foi salvo em {estatistica_tokens} *** \n")
 
     # ********** ESTRATIFICAÇÃO DOS DADOS **********
     # 1. Cria a coluna dos rótulos BIO
@@ -118,7 +118,7 @@ def main():
     df_train, df_test = train_test_split(df_unico,test_size=0.2,random_state=SEED,stratify = df_unico['contem_erro'])
 
     df_divisao = pd.DataFrame({
-        'TIPOS': ['TREINO','TESTE'],
+        'TIPOS': ['FRASES PARA TREINO','FRASES PARA TESTE'],
         'FRASES': [df_train.get, df_test.get]})
 
     # 1. Tamanho dos conjuntos de dados (número de frases)
@@ -130,7 +130,7 @@ def main():
     df_divisao.to_csv(estratificacao_dados, sep='\t', index=False, encoding='utf-8')
 
     print(df_divisao)
-    print(f"\nA divisão dos dados foi salva em {estatistica_tokens}\n")
+    print(f"\n *** A divisão dos dados foi salva em {estatistica_tokens} *** \n")
 
 if __name__ == "__main__":
     main()

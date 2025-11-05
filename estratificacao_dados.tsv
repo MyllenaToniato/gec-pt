@@ -1,5 +1,5 @@
 TIPOS	FRASES
-TREINO	"<bound method NDFrame.get of                                          frase_original  ... contem_erro
+FRASES PARA TREINO	"<bound method NDFrame.get of                                          frase_original  ... contem_erro
 1259  Nunca mais voltou <wrong>atrás,</wrong> <corre...  ...        True
 1330  Temos também que desenvolver o senso crítico e...  ...        True
 2852  O horário eleitoral gratuito não é usual em ou...  ...        True
@@ -13,7 +13,7 @@ TREINO	"<bound method NDFrame.get of                                          fr
 4516  Uma pesquisa realizada pelo Instituto Data Fol...  ...        True
 
 [5077 rows x 3 columns]>"
-TESTE	"<bound method NDFrame.get of                                          frase_original  ... contem_erro
+FRASES PARA TESTE	"<bound method NDFrame.get of                                          frase_original  ... contem_erro
 3015  <wrong>È</wrong> <correct>É</correct> invioláv...  ...        True
 4436  Democracia é isso: a constante fiscalização da...  ...        True
 4608  Também deve fornecer os meios médicos para<wro...  ...        True
