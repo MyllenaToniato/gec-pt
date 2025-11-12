@@ -60,9 +60,47 @@ def contem_erro(sentenca_bio):
             return True
     return False
 
+# ********** FUNÇÃO PARA LER OS ARQUIVOS TEST.TSV E TRAIN.TSV E TRANSFORMAR AS SENTENÇAS EM FORMATO BIO **********
+
+def analisa_estratificacao(arquivo):
+    try:
+        df = pd.read.csv(arquivo, encoding='latin-1', sep='\t')
+    except FileNotFoundError:
+        print ("Não foi possível ler os arquivos de treino e teste. Tente novamente.")
+        return 1
+
+    try:
+        df['formato_bio_list'] = df['formato_bio'].apply(eval)
+    except Exception as e:
+        print(f"Erro ao converter 'formato_bio' em {arquivo}. Verifique o formato dos dados: {e}")
+        return None, 0
+
+    qtd_tags = []
+    for token_tag in df_unico['formato_bio_list']:
+        for token, tag in token_tag:
+            qtd_tags.append(tag)
+
+    # 2. Contar as ocorrências de cada tag
+    contagem_tags = Counter(qtd_tags)
+    total_tokens = len(qtd_tags)
+
+    # 3. Criar e exportar o DataFrame de cálculo
+    df_calculo = pd.DataFrame({
+        'Tipo': ['Total de Tokens', 'Tokens B-WRONG', 'Tokens I-WRONG', 'Tokens O'],
+        'Quantidade': [
+            total_tokens,
+            contagem_tags.get('B-WRONG', 0),
+            contagem_tags.get('I-WRONG', 0),
+            contagem_tags.get('O', 0) ]
+    })
+
 def main():
     # Leitura do arquivo CSV (TSV), com suporte de acentuação
-    leitura = pd.read_csv('resultado_extrair_sentenca_erro_semerro.tsv', encoding='latin-1', sep='\t')
+    try:
+        leitura = pd.read_csv('resultado_extrair_sentenca_erro_semerro.tsv', encoding='latin-1', sep='\t')
+    except FileNotFoundError:
+        print ("Erro na leitura do arquivo 'resultado_extrair_sentenca_erro_semerro.tsv'.")
+        return
 
     # Aplica a transformação BIO em todas as linhas
     leitura['formato_bio'] = leitura['Texto'].apply(tag2bio)
@@ -118,18 +156,25 @@ def main():
     df_train, df_test = train_test_split(df_unico,test_size=0.2,random_state=SEED,stratify = df_unico['contem_erro'])
 
     # 1. Tamanho dos conjuntos de dados (número de frases)
-    print(f"Total de frases: {len(df_unico)}")
+    print(f"\nTotal de frases: {len(df_unico)}")
     print(f"Frases para treinamento (80%): {len(df_train)}")
     print(f"Frases para teste (20%): {len(df_test)}")
 
+    # Arquivos train.tsv (80%) e test.tsv (20%) com texto e contem_erro
     treino_dados = 'train.tsv'
-    df_train.to_csv(treino_dados, sep='\t', index=False, encoding='utf-8')
-
+    df_train[['Texto', 'contem_erro']].to_csv(treino_dados, sep='\t', index=False, encoding='utf-8')
     teste_dados = 'test.tsv'
-    df_test.to_csv(teste_dados, sep='\t', index=False, encoding='utf-8')
+    df_test[['Texto', 'contem_erro']].to_csv(teste_dados, sep='\t', index=False, encoding='utf-8')
 
-    print(df_train)
-    print(df_test)
+    print("\nOs arquivos train.tsv e test.tsv foram gerados com sucesso.")
+
+    # Arquivos train_bio.tsv (80%0 e test_bio.tsv (20%) com texto, formato_bio e contem_erro
+    treino_bio_dados = 'train_bio.tsv'
+    df_train[['Texto','formato_bio','contem_erro']].to_csv(treino_bio_dados, sep='\t', index=False, encoding='utf-8')
+    teste_bio_dados = 'test_bio.tsv'
+    df_test[['Texto','formato_bio','contem_erro']].to_csv(teste_bio_dados, sep='\t', index=False, encoding='utf-8')
+
+    print("Os arquivos train_bio.tsv e test_bio.tsv foram gerados com sucesso.")
 
 if __name__ == "__main__":
     main()
