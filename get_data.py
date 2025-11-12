@@ -2,6 +2,7 @@ import pandas as pd
 import re
 from collections import Counter
 from sklearn.model_selection import train_test_split
+import torch
 
 SEED = 100
 
@@ -61,24 +62,24 @@ def contem_erro(sentenca_bio):
 
 def main():
     # Leitura do arquivo CSV (TSV), com suporte de acentuação
-    leitura = pd.read_csv('erros_wrong_correct_com_frase_original.tsv', encoding='utf-8', sep='\t')
+    leitura = pd.read_csv('resultado_extrair_sentenca_erro_semerro.tsv', encoding='latin-1', sep='\t')
 
     # Aplica a transformação BIO em todas as linhas
-    leitura['formato_bio'] = leitura['frase_original'].apply(tag2bio)
+    leitura['formato_bio'] = leitura['Texto'].apply(tag2bio)
 
     # Coluna temporária
     leitura['formato_bio_str'] = leitura['formato_bio'].astype(str)
 
     # Criação de um Dataframe com sentenças não repetidas
-    df_unico = leitura[['frase_original', 'formato_bio', 'formato_bio_str']].drop_duplicates(
-        subset=['frase_original', 'formato_bio_str']
+    df_unico = leitura[['Texto', 'formato_bio', 'formato_bio_str']].drop_duplicates(
+        subset=['Texto', 'formato_bio_str']
     ).drop(columns=['formato_bio_str']).reset_index(drop=True)
 
     print("*** SENTENÇAS EM FORMATO BIO *** ")
 
     for i in range(len(df_unico)):
         print(f"\n--- Sentença Nº{i + 1} ---")
-        print(f"Sentença original: {df_unico['frase_original'].iloc[i]}")
+        print(f"Sentença original: {df_unico['Texto'].iloc[i]}")
         print(f"Formato BIO: {df_unico['formato_bio'].iloc[i]}")
 
     # ********** Cálculo da quantidade total de tags e dos tokens B, I e O. **********
@@ -108,7 +109,6 @@ def main():
 
     print(f"\n*** ESTATÍSTICA DOS DADOS ***")
     print(df_calculo)
-    print(f"\n *** O cálculo dos dados foi salvo em {estatistica_tokens} *** \n")
 
     # ********** ESTRATIFICAÇÃO DOS DADOS **********
     # 1. Cria a coluna dos rótulos BIO
@@ -117,20 +117,19 @@ def main():
     # 2. Faz a divisão nos DataFrames (df_unico), que contêm a frase original e o formato BIO
     df_train, df_test = train_test_split(df_unico,test_size=0.2,random_state=SEED,stratify = df_unico['contem_erro'])
 
-    df_divisao = pd.DataFrame({
-        'TIPOS': ['FRASES PARA TREINO','FRASES PARA TESTE'],
-        'FRASES': [df_train.get, df_test.get]})
-
     # 1. Tamanho dos conjuntos de dados (número de frases)
     print(f"Total de frases: {len(df_unico)}")
     print(f"Frases para treinamento (80%): {len(df_train)}")
     print(f"Frases para teste (20%): {len(df_test)}")
 
-    estratificacao_dados = 'estratificacao_dados.tsv'
-    df_divisao.to_csv(estratificacao_dados, sep='\t', index=False, encoding='utf-8')
+    treino_dados = 'train.tsv'
+    df_train.to_csv(treino_dados, sep='\t', index=False, encoding='utf-8')
 
-    print(df_divisao)
-    print(f"\n *** A divisão dos dados foi salva em {estatistica_tokens} *** \n")
+    teste_dados = 'test.tsv'
+    df_test.to_csv(teste_dados, sep='\t', index=False, encoding='utf-8')
+
+    print(df_train)
+    print(df_test)
 
 if __name__ == "__main__":
     main()
