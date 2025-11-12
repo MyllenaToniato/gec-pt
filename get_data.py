@@ -2,9 +2,10 @@ import pandas as pd
 import re
 from collections import Counter
 from sklearn.model_selection import train_test_split
-import torch
 
 SEED = 100
+
+# ********** FUNÇÃO PARA TRANSFORMAR AS SENTENÇAS COM TAGS EM SENTENÇAS EM FORMATO BIO **********
 
 def tag2bio(sentenca):
     if not isinstance(sentenca, str):
@@ -54,6 +55,8 @@ def tag2bio(sentenca):
 
     return bio
 
+# ********** FUNÇÃO PARA VERIFICAR SE A FRASE CONTÉM ERRO **********
+
 def contem_erro(sentenca_bio):
     for _, tag in sentenca_bio:
         if 'WRONG' in tag:
@@ -64,7 +67,7 @@ def contem_erro(sentenca_bio):
 
 def analisa_estratificacao(arquivo):
     try:
-        df = pd.read.csv(arquivo, encoding='latin-1', sep='\t')
+        df = pd.read_csv(arquivo, encoding='latin-1', sep='\t')
     except FileNotFoundError:
         print ("Não foi possível ler os arquivos de treino e teste. Tente novamente.")
         return 1
@@ -75,8 +78,12 @@ def analisa_estratificacao(arquivo):
         print(f"Erro ao converter 'formato_bio' em {arquivo}. Verifique o formato dos dados: {e}")
         return None, 0
 
+# ********** FUNÇÃO PARA CALCULAR AS ESTATÍSTICAS DE CADA TOTAL E DE CADA TAG EM FORMATO BIO **********
+
+def calcular_estatistica_bio (df):
+    # 1. Extração das tags de cada token, usando cada conjunto de tokens e tags de cada sentença
     qtd_tags = []
-    for token_tag in df_unico['formato_bio_list']:
+    for token_tag in df['formato_bio']:
         for token, tag in token_tag:
             qtd_tags.append(tag)
 
@@ -94,6 +101,8 @@ def analisa_estratificacao(arquivo):
             contagem_tags.get('O', 0) ]
     })
 
+    return df_calculo
+
 def main():
     # Leitura do arquivo CSV (TSV), com suporte de acentuação
     try:
@@ -105,7 +114,7 @@ def main():
     # Aplica a transformação BIO em todas as linhas
     leitura['formato_bio'] = leitura['Texto'].apply(tag2bio)
 
-    # Coluna temporária
+    # Coluna temporária p/ identificar duplicações
     leitura['formato_bio_str'] = leitura['formato_bio'].astype(str)
 
     # Criação de um Dataframe com sentenças não repetidas
@@ -122,25 +131,7 @@ def main():
 
     # ********** Cálculo da quantidade total de tags e dos tokens B, I e O. **********
 
-    # 1. Extração das tags de cada token, usando cada conjunto de tokens e tags de cada sentença
-    qtd_tags = []
-    for token_tag in df_unico['formato_bio']:
-        for token, tag in token_tag:
-            qtd_tags.append(tag)
-
-    # 2. Contar as ocorrências de cada tag
-    contagem_tags = Counter(qtd_tags)
-    total_tokens = len(qtd_tags)
-
-    # 3. Criar e exportar o DataFrame de cálculo
-    df_calculo = pd.DataFrame({
-        'Tipo': ['Total de Tokens', 'Tokens B-WRONG', 'Tokens I-WRONG', 'Tokens O'],
-        'Quantidade': [
-            total_tokens,
-            contagem_tags.get('B-WRONG', 0),
-            contagem_tags.get('I-WRONG', 0),
-            contagem_tags.get('O', 0) ]
-    })
+    df_calculo = calcular_estatistica_bio (df_unico)
 
     estatistica_tokens = 'estatistica_tokens.tsv'
     df_calculo.to_csv(estatistica_tokens, sep='\t', index=False, encoding='utf-8')
