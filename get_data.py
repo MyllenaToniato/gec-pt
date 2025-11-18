@@ -143,12 +143,12 @@ def main():
         subset=['Texto', 'formato_bio_str']
     ).drop(columns=['formato_bio_str']).reset_index(drop=True)
 
-    print("*** SENTENÇAS EM FORMATO BIO *** ")
+    # print("*** SENTENÇAS EM FORMATO BIO *** ")
 
-    for i in range(len(df_unico)):
-        print(f"\n--- Sentença Nº{i + 1} ---")
-        print(f"Sentença original: {df_unico['Texto'].iloc[i]}")
-        print(f"Formato BIO: {df_unico['formato_bio'].iloc[i]}")
+    # for i in range(len(df_unico)):
+    #     print(f"\n--- Sentença Nº{i + 1} ---")
+    #     print(f"Sentença original: {df_unico['Texto'].iloc[i]}")
+    #     print(f"Formato BIO: {df_unico['formato_bio'].iloc[i]}")
 
     # ********** Cálculo da quantidade total de tags e dos tokens B, I e O. **********
 
