@@ -11,12 +11,14 @@ def tag2bio(sentenca):
     if not isinstance(sentenca, str):
         return []
 
+    tags = ["<wrong>", "</wrong>", "<correct>", "</correct>"]
     sent_temp = sentenca
+
     # ** Separação e armazenamento dos tokens **
 
     # Parte 1: Separação de todas as tags
     sent_temp2 = sent_temp
-    for tag in ["<wrong>", "</wrong>", "<correct>", "</correct>"]:
+    for tag in tags:
         sent_temp2 = sent_temp2.replace(tag, " " + tag + " ")
 
     # Parte 2: Separação da pontuação
@@ -25,12 +27,9 @@ def tag2bio(sentenca):
         sent_temp2 = sent_temp2.replace(pontuacao, " " + pontuacao + " ")
 
     # Parte 3: Guardar tokens separados
-    sent_temp2 = re.sub(r'\s+', ' ', sent_temp2)
+    sent_temp2 = re.sub(r'\s+', ' ', sent_temp2).strip()
 
-    tokens = []
-    for token in sent_temp2.strip().split(' '):
-        if token != "":
-            tokens.append(token)
+    tokens = sent_temp2.split(' ')
 
     # ** Transformar para tag BIO **
     bio = []
@@ -41,9 +40,11 @@ def tag2bio(sentenca):
         if token == "<wrong>":
             trecho_errado = True
             primeiro_erro = True
-        elif token == "</wrong>":
+        elif token == "</wrong>" or token == "<correct>" or token == "</correct>":
             trecho_errado = False
-        else:
+        elif token == "<correct>":
+            trecho_errado = False
+        elif token not in tags:
             if trecho_errado:
                 if primeiro_erro:
                     bio.append((token, "B-WRONG"))
@@ -103,6 +104,26 @@ def calcular_estatistica_bio (df):
 
     return df_calculo
 
+# ********** FUNÇÃO PARA ESTRUTURAR OS ARQUIVOS TRAIN E TEST BIO **********
+
+def file_bio(df, filename):
+    with open(filename, 'w', encoding='utf-8') as f:
+        # df.reset_index() para que 'index' seja numérica
+        df_reset = df.reset_index()
+        for index, row in df_reset.iterrows():
+            sentenca_original = row['Texto']
+            # O 'formato_bio' é uma string, precisamos convertê-la de volta para uma lista de tuplas.
+            formato_bio = eval(row['formato_bio'])
+
+            # Escreve o cabeçalho da sentença
+            f.write(f"Sentença Original N°{index + 1}\n") # index + 1 para começar em 1
+
+            # Escreve cada token e sua tag, separados por tabulação (\t)
+            for token, tag in formato_bio:
+                f.write(f"{token}\t{tag}\n")
+
+            f.write("\n") # Linha em branco para separar as sentenças
+
 def main():
     # Leitura do arquivo CSV (TSV), com suporte de acentuação
     try:
@@ -160,10 +181,14 @@ def main():
     print("\nOs arquivos train.tsv e test.tsv foram gerados com sucesso.")
 
     # Arquivos train_bio.tsv (80%0 e test_bio.tsv (20%) com texto, formato_bio e contem_erro
+    df_train['formato_bio'] = df_train['formato_bio'].astype(str)
+    df_test['formato_bio'] = df_test['formato_bio'].astype(str)
+
     treino_bio_dados = 'train_bio.tsv'
-    df_train[['Texto','formato_bio','contem_erro']].to_csv(treino_bio_dados, sep='\t', index=False, encoding='utf-8')
+    file_bio(df_train, treino_bio_dados)
+
     teste_bio_dados = 'test_bio.tsv'
-    df_test[['Texto','formato_bio','contem_erro']].to_csv(teste_bio_dados, sep='\t', index=False, encoding='utf-8')
+    file_bio(df_test, teste_bio_dados)
 
     print("Os arquivos train_bio.tsv e test_bio.tsv foram gerados com sucesso.")
 
