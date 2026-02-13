@@ -56,6 +56,7 @@ def tag2bio(sentenca):
 
     return bio
 
+
 # ********** FUNÇÃO PARA VERIFICAR SE A FRASE CONTÉM ERRO **********
 
 def contem_erro(sentenca_bio):
@@ -64,13 +65,14 @@ def contem_erro(sentenca_bio):
             return True
     return False
 
+
 # ********** FUNÇÃO PARA LER OS ARQUIVOS TEST.TSV E TRAIN.TSV E TRANSFORMAR AS SENTENÇAS EM FORMATO BIO **********
 
 def analisa_estratificacao(arquivo):
     try:
         df = pd.read_csv(arquivo, encoding='latin-1', sep='\t')
     except FileNotFoundError:
-        print ("Não foi possível ler os arquivos de treino e teste. Tente novamente.")
+        print("Não foi possível ler os arquivos de treino e teste. Tente novamente.")
         return 1
 
     try:
@@ -79,9 +81,10 @@ def analisa_estratificacao(arquivo):
         print(f"Erro ao converter 'formato_bio' em {arquivo}. Verifique o formato dos dados: {e}")
         return None, 0
 
+
 # ********** FUNÇÃO PARA CALCULAR AS ESTATÍSTICAS DE CADA TOTAL E DE CADA TAG EM FORMATO BIO **********
 
-def calcular_estatistica_bio (df):
+def calcular_estatistica_bio(df):
     # 1. Extração das tags de cada token, usando cada conjunto de tokens e tags de cada sentença
     qtd_tags = []
     for token_tag in df['formato_bio']:
@@ -99,10 +102,11 @@ def calcular_estatistica_bio (df):
             total_tokens,
             contagem_tags.get('B-WRONG', 0),
             contagem_tags.get('I-WRONG', 0),
-            contagem_tags.get('O', 0) ]
+            contagem_tags.get('O', 0)]
     })
 
     return df_calculo
+
 
 # ********** FUNÇÃO PARA ESTRUTURAR OS ARQUIVOS TRAIN E TEST BIO **********
 
@@ -116,20 +120,21 @@ def file_bio(df, filename):
             formato_bio = eval(row['formato_bio'])
 
             # Escreve o cabeçalho da sentença
-            f.write(f"Sentença Original N°{index + 1}\n") # index + 1 para começar em 1
+            f.write(f"Sentença Original N°{index + 1}\n")  # index + 1 para começar em 1
 
             # Escreve cada token e sua tag, separados por tabulação (\t)
             for token, tag in formato_bio:
                 f.write(f"{token}\t{tag}\n")
 
-            f.write("\n") # Linha em branco para separar as sentenças
+            f.write("\n")  # Linha em branco para separar as sentenças
+
 
 def main():
     # Leitura do arquivo CSV (TSV), com suporte de acentuação
     try:
         leitura = pd.read_csv('resultado_extrair_sentenca_erro_semerro.tsv', encoding='latin-1', sep='\t')
     except FileNotFoundError:
-        print ("Erro na leitura do arquivo 'resultado_extrair_sentenca_erro_semerro.tsv'.")
+        print("Erro na leitura do arquivo 'resultado_extrair_sentenca_erro_semerro.tsv'.")
         return
 
     # Aplica a transformação BIO em todas as linhas
@@ -152,7 +157,7 @@ def main():
 
     # ********** Cálculo da quantidade total de tags e dos tokens B, I e O. **********
 
-    df_calculo = calcular_estatistica_bio (df_unico)
+    df_calculo = calcular_estatistica_bio(df_unico)
 
     estatistica_tokens = 'estatistica_tokens.tsv'
     df_calculo.to_csv(estatistica_tokens, sep='\t', index=False, encoding='utf-8')
@@ -164,33 +169,40 @@ def main():
     # 1. Cria a coluna dos rótulos BIO
     df_unico['contem_erro'] = df_unico['formato_bio'].apply(contem_erro)
 
-    # 2. Faz a divisão nos DataFrames (df_unico), que contêm a frase original e o formato BIO
-    df_train, df_test = train_test_split(df_unico,test_size=0.2,random_state=SEED,stratify = df_unico['contem_erro'])
+    # 2. Faz a divisão nos DataFrames (df_unico), com 80% do arquivo de treino e 20% de teste
+    df_temp_train, df_test = train_test_split(
+        df_unico,
+        test_size=0.2,
+        random_state=SEED,
+        stratify=df_unico['contem_erro']
+    )
+
+    # 3. Divisão do arquivo de treino em 90% para treino e 10% para validação
+    df_train, df_val = train_test_split(
+        df_temp_train,
+        test_size=0.10,
+        random_state=SEED,
+        stratify=df_temp_train['contem_erro']
+    )
 
     # 1. Tamanho dos conjuntos de dados (número de frases)
     print(f"\nTotal de frases: {len(df_unico)}")
-    print(f"Frases para treinamento (80%): {len(df_train)}")
     print(f"Frases para teste (20%): {len(df_test)}")
+    print(f"Frases para treinamento (90% do conjunto de treino): {len(df_train)}")
+    print(f"Frases para validação (10% do conjunto de treino): {len(df_val)}")
 
-    # Arquivos train.tsv (80%) e test.tsv (20%) com texto e contem_erro
-    treino_dados = 'train.tsv'
-    df_train[['Texto', 'contem_erro']].to_csv(treino_dados, sep='\t', index=False, encoding='utf-8')
-    teste_dados = 'test.tsv'
-    df_test[['Texto', 'contem_erro']].to_csv(teste_dados, sep='\t', index=False, encoding='utf-8')
-
-    print("\nOs arquivos train.tsv e test.tsv foram gerados com sucesso.")
-
-    # Arquivos train_bio.tsv (80%0 e test_bio.tsv (20%) com texto, formato_bio e contem_erro
+    # Criação dos arquivos BIO (treino, validação e teste)
     df_train['formato_bio'] = df_train['formato_bio'].astype(str)
+    file_bio(df_train, 'train_bio.tsv')
+
+    df_val['formato_bio'] = df_val['formato_bio'].astype(str)
+    file_bio(df_val, 'val_bio.tsv')
+
     df_test['formato_bio'] = df_test['formato_bio'].astype(str)
+    file_bio(df_test, 'test_bio.tsv')
 
-    treino_bio_dados = 'train_bio.tsv'
-    file_bio(df_train, treino_bio_dados)
+    print("\nOs arquivos BIO de treino, teste e validação foram gerados com sucesso!")
 
-    teste_bio_dados = 'test_bio.tsv'
-    file_bio(df_test, teste_bio_dados)
-
-    print("Os arquivos train_bio.tsv e test_bio.tsv foram gerados com sucesso.")
 
 if __name__ == "__main__":
     main()
