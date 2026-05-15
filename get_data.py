@@ -5,18 +5,20 @@ from sklearn.model_selection import train_test_split
 
 SEED = 100
 
-# ********** FUNÇÃO PARA TRANSFORMAR AS SENTENÇAS COM TAGS EM SENTENÇAS EM FORMATO BIO **********
+#FUNÇÃO PARA TRANSFORMAR AS SENTENÇAS COM TAGS EM SENTENÇAS EM FORMATO BIO
 
 def tag2bio(sentenca):
     if not isinstance(sentenca, str):
         return []
 
-    tags = ["<wrong>", "</wrong>", "<correct>", "</correct>"]
-    sent_temp = sentenca
+    # Remove completamente o conteúdo entre <correct>...</correct> (incluindo as tags)
+    sent_temp = re.sub(r'<correct>.*?</correct>', '', sentenca, flags=re.IGNORECASE)
+
+    tags = ["<wrong>", "</wrong>"]
 
     # ** Separação e armazenamento dos tokens **
 
-    # Parte 1: Separação de todas as tags
+    # Parte 1: Separação das tags <wrong> e </wrong>
     sent_temp2 = sent_temp
     for tag in tags:
         sent_temp2 = sent_temp2.replace(tag, " " + tag + " ")
@@ -40,9 +42,7 @@ def tag2bio(sentenca):
         if token == "<wrong>":
             trecho_errado = True
             primeiro_erro = True
-        elif token == "</wrong>" or token == "<correct>" or token == "</correct>":
-            trecho_errado = False
-        elif token == "<correct>":
+        elif token == "</wrong>":
             trecho_errado = False
         elif token not in tags:
             if trecho_errado:
@@ -147,13 +147,6 @@ def main():
     df_unico = leitura[['Texto', 'formato_bio', 'formato_bio_str']].drop_duplicates(
         subset=['Texto', 'formato_bio_str']
     ).drop(columns=['formato_bio_str']).reset_index(drop=True)
-
-    # print("*** SENTENÇAS EM FORMATO BIO *** ")
-
-    # for i in range(len(df_unico)):
-    #     print(f"\n--- Sentença Nº{i + 1} ---")
-    #     print(f"Sentença original: {df_unico['Texto'].iloc[i]}")
-    #     print(f"Formato BIO: {df_unico['formato_bio'].iloc[i]}")
 
     # ********** Cálculo da quantidade total de tags e dos tokens B, I e O. **********
 
